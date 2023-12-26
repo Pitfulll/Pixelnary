@@ -21,7 +21,7 @@ import java.io.PrintWriter;
 public class drawingGUI extends JFrame {
 // Yan 11/27 
     private JTextArea chatArea;
-    private JTextField messageField;
+    public JTextField messageField;
     private PrintWriter out;
     public boolean isViewerMode = false;
     public boolean isPressed = false;
@@ -42,6 +42,8 @@ public class drawingGUI extends JFrame {
 
     String[] gameWords = {"Swing", "Coat", "Shoe", "Ocean", "Dog", "Mouth", "Milk", "Duck", "Skateboard", "Bird", "Mouse", "Whale", "Jacket", "Shirt", "Hippo", "Beach", "Egg", "Cookie", "Cheese", "Skip", "Drum", "homework", "glue", "eraser", "peace", "panic", "alarm", "far", "comfy", "dripping", "boring", "hot", "cold", "parents", "closet", "laugh", "falling", "sleepover", "calendar", "sunscreen", "panda", "detention", "hair", "ice skating", "afraid", "dictionary", "homerun", "root beer float", "hibernation", "street sweeper", "spitball", "drinking fountain", "imagination", "Angry", "Fireworks", "Pumpkin", "Baby", "Flower", "Rainbow", "Beard", "Flying saucer", "Recycle", "Bible", "Giraffe", "Sand castle", "Bikini", "Glasses", "Snowflake", "Book", "High heel", "Stairs", "Bucket", "Ice cream cone", "Starfish", "Bumble bee", "Igloo", "Strawberry", "Butterfly", "Lady bug", "Sun", "Camera", "Lamp", "Tire", "Cat", "Lion", "Toast", "Church", "Mailbox", "Toothbrush", "Crayon", "Night", "Toothpaste", "Dolphin", "Nose", "Truck", "Egg", "Olympics", "Volleyball", "Eiffel Tower", "Peanut", "half cardboard", "oar", "baby-sitter", "drip", "shampoo", "point", "time machine", "yardstick", "think", "lace darts", "world", "avocado bleach", "shower", "curtain", "extension cord dent", "birthday lap", "sandbox", "bruise", "quicksand", "fog", "gasoline", "pocket", "honk", "sponge", "rim", "bride", "wig", "zipper", "wag", "letter opener", "fiddle", "water buffalo", "pilot", "brand pail", "baguette", "rib mascot", "fireman", "pole zoo sushi", "fizz ceiling", "fan bald", "banister punk", "post office", "season", "Internet", "chess", "puppet", "chime", "ivy"};
     JLabel keyWord;
+    JLabel timeLeft;
+    JLabel time;
     private JTextField username;
     
     public static void main(String[] args) {
@@ -81,7 +83,7 @@ public class drawingGUI extends JFrame {
     }
 
     private void initUI() {
-        setTitle("Drawing GUI");
+        setTitle("Pixelnary");
 
         JPanel drawingArea = new JPanel();
         drawingArea.setLayout(new GridLayout(64, 64)); 
@@ -117,7 +119,10 @@ public class drawingGUI extends JFrame {
     // Yan 12/02
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setPreferredSize(new Dimension(100, 60)); 
-
+        timeLeft = new JLabel("");
+        buttonPanel.add(timeLeft);
+        time = new JLabel("");
+        buttonPanel.add(time);
         JLabel user = new JLabel("Set username: ");
         buttonPanel.add(user); 
         username = new JTextField();
@@ -238,9 +243,20 @@ public class drawingGUI extends JFrame {
         {
             keyWord.setText("Join to Play!");
         }
+        else if(mode == 3)
+        {
+            timeLeft.setText("Time: ");
+        }
+        else if(mode == 4)
+        {
+            timeLeft.setText("");
+            time.setText("");
+        }
     }
     
-    
+    public void timeUpdate(int time){
+        this.time.setText(Integer.toString(time));
+    }
     
 
     //Trinity

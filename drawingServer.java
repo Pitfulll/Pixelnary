@@ -4,9 +4,16 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.net.InetAddress;
 
-//Might have to take out clear button
+/* TODO:
+ * Add turn progression
+ * Indicate when the round is over/starts 
+ * Drawer wins when atleast half of the people guess correctly
+ * something that shows how many people guess correctly
+ */
 
 public class drawingServer {
 
@@ -37,9 +44,8 @@ public class drawingServer {
                 count++;
                 System.out.println("Number of clients: " + Integer.toString(count) + " Drawing Bool: " + String.valueOf(isDrawer[0]));
                 Thread thread = new Thread(new ClientHandler(clientSocket, isDrawer, this));
-                isDrawer[0] = false;
-                System.out.println("Past bool");
                 thread.start();
+                isDrawer[0] = false;
             }
         } catch (IOException e) {
             
@@ -80,7 +86,7 @@ public class drawingServer {
         public static ArrayList<ClientHandler> clients = new ArrayList<ClientHandler>();
         private ObjectOutputStream out;
         private ObjectInputStream in;
-        private boolean isDrawer[];
+        public boolean isDrawer[] = {true};
         public static String[] data = new String[4096];
         public static int count = 0;
         public int[] coords;
@@ -90,7 +96,7 @@ public class drawingServer {
  
         public ClientHandler(Socket socket, boolean[] isDrawer, drawingServer server) {
             this.clientSocket = socket;
-            this.isDrawer = isDrawer;
+            this.isDrawer[0] = isDrawer[0];
             this.server = server;
             keyword[0] = server.currentWord;
             clients.add(this);
@@ -101,7 +107,6 @@ public class drawingServer {
 
                 this.out.writeObject(isDrawer);
                 this.out.flush();
-                System.out.println("Boolean sent");
                 
                 if(isDrawer[0] == false)
                 {
@@ -126,7 +131,6 @@ public class drawingServer {
                 try {
                 //Should only pass this when drawing
                 int type = in.readInt();
-                System.out.println("Type is: " + Integer.toString(type));
                 if(type == 0) // Drawing area data
                 {
                     int[] pack = (int[])in.readObject();
@@ -139,7 +143,6 @@ public class drawingServer {
                         try{
                             if(clientHandler != this)
                             {
-                                System.out.println("Client!");
                                 clientHandler.out.writeInt(0);
                                 clientHandler.out.writeObject(pack);
                                 clientHandler.out.flush();
@@ -223,6 +226,55 @@ public class drawingServer {
             }
             
         }
+
+        public void newRound()
+        {
+            Timer timer = new Timer();
+            TimerTask task = new TimerTask()
+            {
+                public void run()
+                {
+                    //Announce that round is over
+                    //Switch Drawer and keyword
+
+                }
+            };
+        }
+        public void clearClients()
+        {
+            try{
+                clearData();
+                for(ClientHandler clientHandler: clients)
+                {
+                    System.out.println("Clear");
+                    clientHandler.out.writeInt(2);
+                    clientHandler.out.flush();
+                }
+            }catch(IOException e){
+                closeAll(in, out, clientSocket);
+            }
+        }
+
+        public void clearClients(ClientHandler client)
+        {
+            clearData();
+            try{
+                for(ClientHandler clientHandler: clients)
+                {
+                    
+                    if(clientHandler != client)
+                    {
+                        System.out.println("Clear");
+                        clientHandler.out.writeInt(2); 
+                        clientHandler.out.flush();
+                    }
+                    
+                }
+            }catch(IOException e){
+                closeAll(in, out, clientSocket);
+            }
+        }
+
         public void clearData()
         {
             for(int i = 0; i < count; i++)
@@ -232,28 +284,68 @@ public class drawingServer {
             count = 0;
         }
 
-        public void changeDrawer()
+        public void changeDrawer(boolean stillHere)
         {
             try {
                 out = new ObjectOutputStream(clientSocket.getOutputStream());
-                boolean[] drawChange = {true};
-                clients.get(0).out.writeInt(1);
-                clients.get(0).out.writeObject(drawChange);
-                clients.get(0).out.flush();
+                boolean[] drawChange = {false};
+                if(stillHere)
+                {
+                    this.out.writeInt(1);
+                    this.out.writeObject(drawChange);
+                    this.out.flush();
+                    this.isDrawer[0] = false;
+                    clearClients();
+                }
+                else
+                {
+                   clearClients(this);
+                }
+                drawChange[0] = true;
+                System.out.println("Inside Change draw");
+                
+                for(int i = 0; i < clients.size(); i++)
+                {
+                    System.out.println(Boolean.toString(clients.get(i).isDrawer[0]) + " " + Integer.toString(i) + Integer.toString(clients.size()));
+                    if(clients.get(i) == this && clients.get(i+1) != null)
+                    {
+                        clients.get(i+1).out.writeInt(1);
+                        clients.get(i+1).out.writeObject(drawChange);
+                        clients.get(i+1).out.flush();
+                        clients.get(i+1).isDrawer[0] = true;
+                        System.out.println("Made it " + Boolean.toString(clients.get(i+1).isDrawer[0]));
+                        break;
+                    }
+                    else if(clients.get(i) == this && clients.get(i+1) == null)
+                    {
+                        System.out.println("Shouldn't be in here");
+                        clients.get(0).out.writeInt(1);
+                        clients.get(0).out.writeObject(drawChange);
+                        clients.get(0).out.flush();
+                        break;
+                    }
+                }
+            
                 
             }catch(IOException e){
-                //clientSocket.close();
+                System.out.println("Error in change draw");
             }
         }
 
         public void removeClient()
         {
-            clients.remove(this);
-            if(clients.size() > 0)
+  
+            if(clients.size() > 1 && isDrawer[0] == true)
             {
-                changeDrawer();
+                System.out.println("Removed Drawer");
+                changeDrawer(false);
+                clients.remove(this);
+                clearData();
+                System.out.println("Past remove Client");
             }
             else{
+                System.out.println("Removed Player " + Integer.toString(clients.size()) + " " + Boolean.toString(isDrawer[0]));
+                clients.remove(this);
                 server.isDrawer[0] = true;
                 clearData();
             }
@@ -261,6 +353,7 @@ public class drawingServer {
 
         public void closeAll(ObjectInputStream in, ObjectOutputStream out, Socket sock)
         {
+            System.out.println("close: " + Boolean.toString(isDrawer[0]));
             removeClient();
             try
             {

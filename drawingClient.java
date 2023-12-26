@@ -13,7 +13,6 @@ import java.io.*;
 import java.net.*;
 import javax.swing.*;
 import java.util.ArrayList;
-import java.net.InetAddress;
 
 public class drawingClient {
     //Natalie 11/27
@@ -87,6 +86,12 @@ public class drawingClient {
         try{
             toServe.writeInt(2);
             toServe.writeObject(mes);
+            String msg[] = {mes[0].split("] ")[1]};
+            if(msg[0].equals(gui.currentWord))
+            {
+                System.out.println("Currently: " + gui.currentWord);
+                gui.messageField.setEditable(false);
+            }
             toServe.flush();
         }catch(IOException e)
         {
@@ -109,7 +114,10 @@ public class drawingClient {
                 //System.out.println("Made it, boolean: " + String.valueOf(((boolean[])in.readObject())[0]));
                 boolean[] bool = (boolean[])in.readObject();
                 gui.isViewerMode = !bool[0];
-                
+                if(gui.isViewerMode != true)
+                {
+                    //gui.messageField.setEditable(false);
+                }
                 System.out.println(String.valueOf(bool[0]));
                 if(bool[0] == false)
                 {
@@ -149,7 +157,8 @@ public class drawingClient {
                         }
                         else if(type == 2)
                         {
-                            boolean[] nbool = (boolean[])in.readObject();
+                            System.out.println("Made it to clear");
+                            //boolean[] test = (boolean[])in.readObject();
                             gui.clearScreen();
                         }
                         else if(type == 3)
